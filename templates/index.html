@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Chatbot</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            margin: 0;
+        }
+        .chat-container {
+            width: 400px;
+            background: white;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+            display: flex;
+            flex-direction: column;
+        }
+        .chat-box {
+            height: 350px;
+            overflow-y: auto;
+            padding: 10px;
+            border-radius: 8px;
+            background: #f9f9f9;
+            margin-bottom: 15px;
+            display: flex;
+            flex-direction: column;
+        }
+        .message {
+            max-width: 80%;
+            padding: 12px;
+            margin: 5px;
+            border-radius: 10px;
+            font-size: 14px;
+            line-height: 1.4;
+            display: inline-block;
+        }
+        .user {
+            background: #007bff;
+            color: white;
+            align-self: flex-end;
+        }
+        .bot {
+            background: #e5e5ea;
+            color: black;
+            align-self: flex-start;
+        }
+        .input-container {
+            display: flex;
+            gap: 10px;
+        }
+        input {
+            flex: 1;
+            padding: 12px;
+            border: none;
+            border-radius: 20px;
+            outline: none;
+            background: #f1f1f1;
+            font-size: 14px;
+        }
+        button {
+            padding: 12px 20px;
+            border: none;
+            border-radius: 20px;
+            background: #007bff;
+            color: white;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+        button:hover {
+            background: #0056b3;
+        }
+        .btn-group {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="chat-container">
+    <div class="chat-box" id="chat-box"></div>
+    <div class="input-container">
+        <input type="text" id="user-input" placeholder="Type a message..." onkeypress="handleKeyPress(event)">
+    </div>
+    <div class="btn-group">
+        <button onclick="generateText()">Generate</button>
+        <button onclick="summarizeText()">Summarize</button>
+    </div>
+</div>
+
+<script>
+const GENERATE_API_URL = "http://127.0.0.1:5000/generate"; 
+const SUMMARIZE_API_URL = "http://127.0.0.1:5000/summarize"; 
+
+function handleKeyPress(event) {
+    if (event.key === "Enter") {
+        generateText();
+    }
+}
+
+function appendMessage(text, className) {
+    let chatBox = document.getElementById("chat-box");
+    let message = document.createElement("div");
+    message.className = `message ${className}`;
+    message.innerText = text;
+    chatBox.appendChild(message);
+    chatBox.scrollTop = chatBox.scrollHeight;
+}
+
+function generateText() {
+    let userInput = document.getElementById("user-input").value.trim();
+    if (!userInput) return;
+    
+    appendMessage(userInput, "user");
+    document.getElementById("user-input").value = "";
+
+    fetch(GENERATE_API_URL, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ prompt: userInput })
+    })
+    .then(response => response.json())
+    .then(data => {
+        appendMessage(data.response || "Failed to generate text.", "bot");
+    })
+    .catch(error => {
+        console.error("Error:", error);
+        appendMessage("Error connecting to the chatbot.", "bot");
+    });
+}
+
+function summarizeText() {
+    let userInput = document.getElementById("user-input").value.trim();
+    if (!userInput) return;
+    
+    appendMessage(userInput, "user");
+    document.getElementById("user-input").value = "";
+
+    fetch(SUMMARIZE_API_URL, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ text: userInput })
+    })
+    .then(response => response.json())
+    .then(data => {
+        appendMessage(data.summary || "Failed to summarize text.", "bot");
+    })
+    .catch(error => {
+        console.error("Error:", error);
+        appendMessage("Error connecting to the summarizer.", "bot");
+    });
+}
+</script>
+
+</body>
+</html>
